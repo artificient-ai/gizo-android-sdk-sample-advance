@@ -1,0 +1,18 @@
+object Android {
+    private const val coreVersion = "1.10.1"
+    private const val lifecycleRuntimeVersion = "2.5.1"
+    private const val appcompatVersion = "1.6.1"
+    private const val androidxStartupVersionVersion = "1.1.1"
+    private const val androidxActivityVersion = "1.6.0-alpha05"
+    private const val androidxTracingVersion = "1.2.0-alpha01"
+    private const val androidxExifinterfaceVersion = "1.3.3"
+    private const val androidxLifecycleServiceVersion = "2.4.0"
+    const val androidCore = "androidx.core:core-ktx:$coreVersion"
+    const val lifecycleRuntime = "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleRuntimeVersion"
+    const val appcompat = "androidx.appcompat:appcompat:$appcompatVersion"
+    const val androidxActivity = "androidx.activity:activity:$androidxActivityVersion"
+    const val androidxStartup = "androidx.startup:startup-runtime:$androidxStartupVersionVersion"
+    const val androidxTracing = "androidx.tracing:tracing-ktx:$androidxTracingVersion"
+    const val androidxTracingLifecycleService = "androidx.lifecycle:lifecycle-service:$androidxLifecycleServiceVersion"
+    const val androidxExifinterface = "androidx.exifinterface:exifinterface:$androidxExifinterfaceVersion"
+}

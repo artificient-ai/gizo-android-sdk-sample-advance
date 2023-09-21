@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gizo_access_token">YOUR_GIZO_LICENCE</string>
+    <string name="mapbox_access_token">YOUR_MAPBOX_ACCESS_TOKEN</string>
+    <string name="app_name">Gizo Sample</string>
+    <string name="gizo_ttc_danger_message">Break now! Possible Accident.</string>
+    <string name="gizo_enable_gps">Enable GPS</string>
+    <string name="gizo_gps_required">Enabled GPS is required for Gizo</string>
+    <string name="gizo_enable">Enable</string>
+    <string name="gizo_dismiss">Dismiss</string>
+</resources>
