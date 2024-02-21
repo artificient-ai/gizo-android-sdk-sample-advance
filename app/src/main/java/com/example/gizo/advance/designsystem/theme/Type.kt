@@ -2,9 +2,12 @@ package com.example.gizo.advance.designsystem.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.gizo.advance.R
 
 internal val GizoTypography = Typography(
     displayLarge = TextStyle(
@@ -91,4 +94,17 @@ internal val GizoTypography = Typography(
         fontSize = 10.sp,
         lineHeight = 16.sp
     )
+)
+
+
+internal val urbanistFontFamily = FontFamily(
+    Font(R.font.urbanist_light, FontWeight.Light),
+    Font(R.font.urbanist_medium, FontWeight.Medium),
+    Font(R.font.urbanist_bold, FontWeight.Bold),
+    Font(R.font.urbanist_thin, FontWeight.Thin),
+    Font(R.font.urbanist_regular, FontWeight.Normal),
+    Font(R.font.urbanist_italic, FontWeight.Normal, style = FontStyle.Italic),
+    Font(R.font.urbanist_light_italic, FontWeight.Normal, style = FontStyle.Italic),
+    Font(R.font.urbanist_medium_italic, FontWeight.Normal, style = FontStyle.Italic),
+    Font(R.font.urbanist_bold_italic, FontWeight.Normal, style = FontStyle.Italic),
 )

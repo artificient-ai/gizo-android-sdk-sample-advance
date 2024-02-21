@@ -1,4 +1,4 @@
-package com.example.gizo.advance.recording.presentation
+package com.example.gizo.advance.recording.presentation.camera
 
 import android.content.Intent
 import android.provider.Settings
@@ -50,11 +50,16 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.example.gizo.advance.R
 import com.example.gizo.advance.designsystem.component.GizoAlertDialog
 import com.example.gizo.advance.designsystem.theme.AppTheme
+import com.example.gizo.advance.designsystem.theme.redesignRedColor
+import com.example.gizo.advance.designsystem.theme.urbanistFontFamily
+import com.example.gizo.advance.recording.presentation.RecordingUiState
+import com.example.gizo.advance.recording.presentation.RecordingViewModel
 import com.example.gizo.advance.recording.presentation.component.AlertComponent
+import com.example.gizo.advance.recording.presentation.component.GpsDialog
 import com.example.gizo.advance.recording.presentation.component.RotateComponent
 
 @Composable
- fun RecordingScreen(
+fun RecordingScreen(
     viewModel: RecordingViewModel,
     onAttachPreview: (PreviewView) -> Unit,
     onClose: () -> Unit
@@ -71,7 +76,7 @@ import com.example.gizo.advance.recording.presentation.component.RotateComponent
     }
 
     BackHandler {
-        if (uiState.inProgress.not())
+        if (uiState.isRecording.not())
             onClose()
     }
 
@@ -83,13 +88,13 @@ import com.example.gizo.advance.recording.presentation.component.RotateComponent
             )
         }
 
-    if (uiState.isOrientationAlign.not()) {
+    if (uiState.isGravityAlign.not()) {
         RotateComponent(modifier = Modifier)
     } else
         RecordingScreenBody(
             uiState = uiState,
             onPreviewClick = { viewModel.togglePreview(previewView) },
-            onRecordingClick = { viewModel.startProgress() },
+            onRecordingClick = { viewModel.startRecordingVideo() },
             onCloseClick = { onClose() },
         )
 
@@ -104,10 +109,26 @@ import com.example.gizo.advance.recording.presentation.component.RotateComponent
             viewModel.gpsNeedCancel()
         })
     }
+
+    if (uiState.lowBatteryDialog.show)
+        GizoAlertDialog(
+            onClose = { viewModel.onAlertDismiss() },
+            title = stringResource(R.string.gizo_low_battery),
+            description = stringResource(R.string.gizo_low_battery_description),
+            icon = painterResource(id = R.drawable.gizo_ic_low_battery)
+        )
+
+    if (uiState.overheatingDialog.show)
+        GizoAlertDialog(
+            onClose = { viewModel.onAlertDismiss() },
+            title = stringResource(R.string.gizo_overheating),
+            description = stringResource(R.string.gizo_overheating_description),
+            icon = painterResource(id = R.drawable.gizo_ic_overheating)
+        )
 }
 
 @Composable
- fun RecordingScreenBody(
+fun RecordingScreenBody(
     uiState: RecordingUiState,
     onPreviewClick: () -> Unit,
     onRecordingClick: () -> Unit,
@@ -125,29 +146,48 @@ import com.example.gizo.advance.recording.presentation.component.RotateComponent
             onCloseClick = onCloseClick,
         )
 
-        Column(
+        LogAnalysis(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 16.dp, bottom = 21.dp),
-            horizontalAlignment = Alignment.End
-        ) {
-            uiState.preview?.let { FrontObjectImage(modifier = Modifier, it) }
-            Spacer(modifier = Modifier.height(12.dp))
+            uiState = uiState
+        )
+    }
+}
+
+@Composable
+fun LogAnalysis(modifier: Modifier = Modifier, uiState: RecordingUiState) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.End
+    ) {
+        uiState.preview?.let { DepthImage(modifier = Modifier, it) }
+        Spacer(modifier = Modifier.height(12.dp))
+        uiState.log.entries.forEach {
+            Text(
+                text = "${it.key}: ${it.value}",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Normal,
+                    fontFamily = urbanistFontFamily,
+                    fontSize = 18.sp
+                ),
+                color = redesignRedColor,
+            )
         }
     }
 }
 
 @Composable
- fun RecordingTools(
+fun RecordingTools(
     modifier: Modifier,
     uiState: RecordingUiState,
     onPreviewClick: () -> Unit,
     onRecordingClick: () -> Unit,
     onCloseClick: () -> Unit,
 ) {
-    val recording = uiState.inProgress
+    val recording = uiState.isRecording
     val preview = uiState.showPreview
-    val close = uiState.inProgress.not()
+    val close = uiState.isRecording.not()
     val warning = uiState.warning
     val speedNotSafe = uiState.speedNotSafe
     val speed = uiState.speed
@@ -309,33 +349,22 @@ import com.example.gizo.advance.recording.presentation.component.RotateComponent
 }
 
 @Composable
- fun GpsDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    GizoAlertDialog(
-        title = {
-            Text(
-                text = stringResource(R.string.gizo_enable_gps),
-                style = MaterialTheme.typography.titleMedium
-            )
-        },
-        content = {
-            Text(
-                text = stringResource(R.string.gizo_gps_required),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        confirmText = stringResource(R.string.gizo_enable),
-        dismissText = stringResource(R.string.gizo_dismiss),
-        onConfirm = {
-            onConfirm()
-        },
-        onDismiss = {
-            onDismiss()
-        })
+fun DepthImage(modifier: Modifier, depthImage: ImageBitmap) {
+    Box(
+        modifier = modifier
+    ) {
+        Image(
+            bitmap = depthImage,
+            contentDescription = "Depth estimation result",
+            modifier = Modifier
+                .align(Alignment.Center)
+        )
+    }
 }
 
 @Preview(device = Devices.DEFAULT, widthDp = 720, heightDp = 320)
 @Composable
- fun RecordingScreenPreview() {
+fun RecordingScreenPreview() {
     AppTheme {
         RecordingScreenBody(
             uiState = RecordingUiState(),
@@ -346,25 +375,21 @@ import com.example.gizo.advance.recording.presentation.component.RotateComponent
     }
 }
 
-@Composable
- fun FrontObjectImage(modifier: Modifier, frontObjectImage: ImageBitmap) {
-    Box(
-        modifier = modifier
-    ) {
-        Image(
-            bitmap = frontObjectImage,
-            contentDescription = "Front object preview",
-            modifier = Modifier
-                .align(Alignment.Center)
-        )
-    }
-}
-
 @Preview(device = Devices.DEFAULT, widthDp = 720, heightDp = 320)
 @Composable
- fun GpsDialogPreview() {
+fun RecordingScreenRecordingPreview() {
     AppTheme {
-        GpsDialog({}, {})
+        RecordingScreenBody(
+            uiState = RecordingUiState(
+                isRecording = true,
+                warning = true,
+                speed = 10,
+                limitSpeed = 20,
+            ),
+            onPreviewClick = {},
+            onRecordingClick = {},
+            onCloseClick = {},
+        )
     }
 }
 

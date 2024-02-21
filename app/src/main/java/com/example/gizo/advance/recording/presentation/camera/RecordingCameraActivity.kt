@@ -1,4 +1,4 @@
-package com.example.gizo.advance.recording.presentation
+package com.example.gizo.advance.recording.presentation.camera
 
 import android.app.Activity
 import android.content.*
@@ -14,13 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
-import dagger.hilt.android.AndroidEntryPoint
 import com.example.gizo.advance.designsystem.theme.AppTheme
+import com.example.gizo.advance.recording.presentation.RecordingViewModel
+import com.example.gizo.advance.recording.presentation.service.RecordingCameraService
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
- class RecordingActivity : ComponentActivity() {
+class RecordingCameraActivity : ComponentActivity() {
     @Inject
     lateinit var assistedFactory: RecordingViewModel.ViewModelAssistedFactory
     private val viewModel: RecordingViewModel by lazy {
@@ -31,9 +33,14 @@ import javax.inject.Inject
         )[RecordingViewModel::class.java]
     }
 
-    private var recordingService: RecordingService? = null
+    private var recordingCameraService: RecordingCameraService? = null
 
     private var previewView: PreviewView?=null
+
+    override fun onNewIntent(intent: Intent?) {
+        viewModel.notifyRecordingFullNotified()
+        super.onNewIntent(intent)
+    }
 
     @ExperimentalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,7 +55,7 @@ import javax.inject.Inject
                     RecordingScreen(viewModel = viewModel,
                         onAttachPreview = { preview ->
                             previewView=preview
-                            onServiceBound(recordingService)
+                            onServiceBound(recordingCameraService)
                         },
                         onClose = { finishAction() })
                 }
@@ -63,39 +70,40 @@ import javax.inject.Inject
     }
 
     private fun bindService() {
-        val intent = Intent(this, RecordingService::class.java)
-        intent.action = RecordingService.ACTION_START_WITH_PREVIEW
+        val intent = Intent(this, RecordingCameraService::class.java)
+        intent.action = RecordingCameraService.ACTION_START_WITH_PREVIEW
         startService(intent)
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
     private fun stopService() {
-        val intent = Intent(this, RecordingService::class.java)
+        val intent = Intent(this, RecordingCameraService::class.java)
         unbindService(serviceConnection)
         stopService(intent)
     }
 
     private val serviceConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            recordingService =
-                (service as RecordingService.RecordingServiceBinder).getService()
-            onServiceBound(recordingService)
+            recordingCameraService =
+                (service as RecordingCameraService.RecordingServiceBinder).getService()
+            onServiceBound(recordingCameraService)
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
         }
     }
 
-    private fun onServiceBound(recordingService: RecordingService?) {
-        recordingService?.bindPreviewUseCase(previewView)
+    private fun onServiceBound(recordingCameraService: RecordingCameraService?) {
+        recordingCameraService?.bindPreviewUseCase(previewView)
     }
 
     public override fun onStart() {
         super.onStart()
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         bindService()
     }
     public override fun onStop() {
-        recordingService?.startRunningInForeground()
+        recordingCameraService?.startRunningInForeground()
         window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         super.onStop()
     }
