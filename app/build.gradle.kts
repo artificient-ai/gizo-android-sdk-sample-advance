@@ -44,12 +44,21 @@ android {
     kotlinOptions {
         jvmTarget = Application.jvmTarget
     }
+    packaging {
+        jniLibs {
+            pickFirsts.add("lib/x86/libc++_shared.so")
+            pickFirsts.add("lib/x86_64/libc++_shared.so")
+            pickFirsts.add("lib/armeabi-v7a/libc++_shared.so")
+            pickFirsts.add("lib/arm64-v8a/libc++_shared.so")
+        }
+    }
 }
 
 dependencies {
-    implementation ("com.github.artificient-ai:gizo-android-sdk-alpha:0.1.0")
+    implementation ("com.github.artificient-ai:gizo-android-sdk-alpha:0.2.0")
 
     with(Android) {
+        implementation(androidCoreKtx)
         implementation(androidCore)
         implementation(appcompat)
         implementation(androidxTracingLifecycleService)
@@ -75,6 +84,22 @@ dependencies {
         implementation(hiltAndroid)
         implementation(hiltNavigationCompose)
         kapt(hiltAndroidCompiler)
+    }
+
+    with(Accompanist) {
+        implementation(systemUiController)
+    }
+
+    with(Android) {
+        implementation(androidxStartup)
+    }
+
+    with(Coroutines) {
+        implementation(workManager)
+    }
+    with(Hilt) {
+        implementation(hiltWork)
+        kapt(hiltWorkCompiler)
     }
 
 }

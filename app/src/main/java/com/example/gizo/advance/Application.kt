@@ -8,12 +8,14 @@ import androidx.lifecycle.ViewModelStoreOwner
 import dagger.hilt.android.HiltAndroidApp
 import de.artificient.gizo.sdk.Gizo
 import de.artificient.gizo.sdk.model.AnalysisDelegateType
-import de.artificient.gizo.sdk.setting.GizoAnalysisSettings
 import de.artificient.gizo.sdk.setting.GizoAppOptions
-import de.artificient.gizo.sdk.setting.GizoBatterySetting
 import de.artificient.gizo.sdk.setting.GizoGpsSetting
+import de.artificient.gizo.sdk.setting.GizoAnalysisSettings
+import de.artificient.gizo.sdk.setting.GizoBatterySetting
+import de.artificient.gizo.sdk.setting.GizoDeviceEventSetting
 import de.artificient.gizo.sdk.setting.GizoImuSetting
 import de.artificient.gizo.sdk.setting.GizoOrientationSetting
+import de.artificient.gizo.sdk.setting.GizoUserActivitySetting
 import de.artificient.gizo.sdk.setting.GizoVideoSetting
 
 @HiltAndroidApp
@@ -60,6 +62,9 @@ class Application : Application(), ViewModelStoreOwner {
                 .batterySetting(
                     GizoBatterySetting.Builder()
                         .checkBattery(true)
+                        .checkThermal(true)
+                        .checkTemperature(true)
+                        .saveCsvFile(true)
                         .build()
                 )
                 .orientationSetting(
@@ -67,8 +72,22 @@ class Application : Application(), ViewModelStoreOwner {
                         .allowGravitySensor(true)
                         .build()
                 )
+                .deviceEventSetting(
+                    GizoDeviceEventSetting.Builder()
+                        .allowDeviceEvent(true)
+                        .saveCsvFile(true)
+                        .build()
+                )
+                .userActivitySetting(
+                    GizoUserActivitySetting.Builder()
+                        .allowUserActivity(true)
+                        .saveCsvFile(true)
+                        .build()
+                )
                 .build()
         )
+
+        StartUpInitializer.initialize(context = this)
 
         Gizo.app.setLoadModelObserver { status ->
             Log.d("LoadModelStatus", "status:" + status.name)

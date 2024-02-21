@@ -1,8 +1,7 @@
 object Hilt {
-    const val hiltVersion = "2.44"
-    private const val hiltNavigationComposeVersion = "1.0.0"
-    private const val hiltWorkVersion = "1.0.0"
-    const val hiltAndroidGradlePlugin = "com.google.dagger:hilt-android-gradle-plugin:$hiltVersion"
+    const val hiltVersion = "2.50"
+    private const val hiltNavigationComposeVersion = "1.1.0"
+    private const val hiltWorkVersion = "1.1.0"
     const val hiltAndroid = "com.google.dagger:hilt-android:$hiltVersion"
     const val hiltAndroidCompiler = "com.google.dagger:hilt-android-compiler:$hiltVersion"
     const val hiltNavigationCompose =

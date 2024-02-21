@@ -1,15 +1,3 @@
 object Kotlin {
-    const val kotlinVersion = "1.8.20"
-    private const val serializationJsonVersion = "1.5.0"
-    private const val kotlinxDatetimeVersion = "0.4.0"
-    private const val kotlinCSVVersion = "1.6.0"
-    private const val buildToolsVersion = "4.0.0"
-    private const val jetbrainsKotlinPluginVersion = "1.0.0"
-    const val kotlinSerialization= "org.jetbrains.kotlin:kotlin-serialization:$kotlinVersion"
-    const val stdlib= "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-    const val kotlinSerializationJson= "org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationJsonVersion"
-    const val kotlinxDatetime= "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion"
-    const val kotlinCSV = "com.github.doyaaaaaken:kotlin-csv-jvm:$kotlinCSVVersion"
-    const val buildToolsGradle = "com.android.tools.build:gradle:$buildToolsVersion"
-    const val jetbrainsKotlinPlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:$jetbrainsKotlinPluginVersion"
+    const val kotlinVersion = "1.9.20"
 }
