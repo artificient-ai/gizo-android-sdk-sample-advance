@@ -55,7 +55,7 @@ android {
 }
 
 dependencies {
-    implementation ("com.github.artificient-ai:gizo-android-sdk-alpha:0.2.0")
+    implementation ("com.github.artificient-ai:gizo-android-sdk-alpha:0.2.1")
 
     with(Android) {
         implementation(androidCoreKtx)

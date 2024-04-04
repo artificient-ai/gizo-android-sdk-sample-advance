@@ -540,7 +540,17 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
             _notificationEvent.tryEmit(NotificationEvent.BackgroundNoCamera)
             Log.d(TAG, "startRecordingVideo start")
             attachMapNavigation()
-            gizoAnalysis.startSavingSession(videoRecording = true,gpsRecording = true)
+            Gizo.setup { option ->
+                option.toBuilder()
+                    .analysisSetting(
+                        option.analysisSetting.toBuilder()
+                            .saveMatrixFile(true)
+                            .saveTtcCsvFile(true)
+                            .build()
+                    )
+                    .build()
+            }
+            gizoAnalysis.startSavingSession(videoRecording = true, gpsRecording = true)
             _recordingState.tryEmit(RecordingState.Full)
         } else {
             Log.d(TAG, "startRecordingVideo stop")
@@ -605,7 +615,7 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
         Log.d(TAG, "startRecordingNoCamera autoStop: $autoStop ")
 
         viewModelScope.launch {
-            if (getBatteryStatus() == BatteryStatus.LOW_BATTERY_STOP) {
+            if (autoStop.not() && getBatteryStatus() == BatteryStatus.LOW_BATTERY_STOP) {
                 _recordingNoCameraUiState.update {
                     it.copy(
                         lowBatteryDialog = LowBatteryDialogState(
@@ -623,6 +633,16 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
             _notificationEvent.tryEmit(NotificationEvent.BackgroundNoCamera)
             Log.d(TAG, "startRecordingNoCamera")
             _recordingState.emit(RecordingState.NoCamera)
+            Gizo.setup { option ->
+                option.toBuilder()
+                    .analysisSetting(
+                        option.analysisSetting.toBuilder()
+                            .saveMatrixFile(false)
+                            .saveTtcCsvFile(false)
+                            .build()
+                    )
+                    .build()
+            }
             gizoAnalysis.startSavingSession(videoRecording = false, gpsRecording = true)
             recordingNoCameraTimerJob?.cancel()
             recordingNoCameraTimerJob = viewModelScope.launch {
@@ -689,6 +709,16 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
                 _notificationEvent.tryEmit(NotificationEvent.BackgroundDefault)
                 attachMapNavigation()
                 _recordingState.emit(RecordingState.Background)
+                Gizo.setup { option ->
+                    option.toBuilder()
+                        .analysisSetting(
+                            option.analysisSetting.toBuilder()
+                                .saveMatrixFile(false)
+                                .saveTtcCsvFile(false)
+                                .build()
+                        )
+                        .build()
+                }
                 gizoAnalysis.startSavingSession(
                     videoRecording = false,
                     gpsRecording = true

@@ -8,7 +8,7 @@ object Application {
  */
     private const val versionMajor = 0
     private const val versionMinor = 2
-    private const val versionPatch = 0
+    private const val versionPatch = 1
     const val compileSdk = 34
     const val minSdk = 26
     const val targetSdk = 34
