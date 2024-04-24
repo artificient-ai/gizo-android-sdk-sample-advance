@@ -70,7 +70,7 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
     private val currentRecordingState
         get() = recordingState.value
 
-    private var lastUserActivity=UserActivityType.STILL
+    private var lastUserActivity = UserActivityType.STILL
 
     private var stillJob: Job? = null
 
@@ -301,7 +301,7 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
             }
         }.launchIn(viewModelScope)
 
-        gizoAnalysis.onUserActivity={time, activities ->
+        gizoAnalysis.onUserActivity = { time, activities ->
 
             activities.forEach { activity ->
                 Log.d(
@@ -453,6 +453,7 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
         lastUserActivity = startedTransition
 
     }
+
     private fun notifyInVehicle() {
         changeRecordState(RecordingState.NoCamera)
     }
@@ -525,44 +526,48 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
 
     fun startRecordingVideo() {
         Log.d(TAG, "startRecordingVideo")
-        if (uiState.value.isRecording.not()) {
-            if (getBatteryStatus() == BatteryStatus.LOW_BATTERY_STOP) {
-                _uiState.update {
-                    it.copy(
-                        lowBatteryDialog = LowBatteryDialogState(
-                            show = true
-                        ),
-                    )
+        viewModelScope.launch {
+            if (uiState.value.isRecording.not()) {
+                if (getBatteryStatus() == BatteryStatus.LOW_BATTERY_STOP) {
+                    _uiState.update {
+                        it.copy(
+                            lowBatteryDialog = LowBatteryDialogState(
+                                show = true
+                            ),
+                        )
+                    }
+                    return@launch
                 }
-                return
+                stopRecording().join()
+                _notificationEvent.tryEmit(NotificationEvent.BackgroundNoCamera)
+                Log.d(TAG, "startRecordingVideo start")
+                attachMapNavigation()
+                Gizo.setup { option ->
+                    option.toBuilder()
+                        .analysisSetting(
+                            option.analysisSetting.toBuilder()
+                                .saveMatrixFile(true)
+                                .saveTtcCsvFile(true)
+                                .build()
+                        )
+                        .build()
+                }
+                gizoAnalysis.startSavingSession(videoRecording = true, gpsRecording = true)
+                _recordingState.tryEmit(RecordingState.Full)
+            } else {
+                Log.d(TAG, "startRecordingVideo stop")
+                stopRecordingVideo()
             }
-            stopRecording()
-            _notificationEvent.tryEmit(NotificationEvent.BackgroundNoCamera)
-            Log.d(TAG, "startRecordingVideo start")
-            attachMapNavigation()
-            Gizo.setup { option ->
-                option.toBuilder()
-                    .analysisSetting(
-                        option.analysisSetting.toBuilder()
-                            .saveMatrixFile(true)
-                            .saveTtcCsvFile(true)
-                            .build()
-                    )
-                    .build()
-            }
-            gizoAnalysis.startSavingSession(videoRecording = true, gpsRecording = true)
-            _recordingState.tryEmit(RecordingState.Full)
-        } else {
-            Log.d(TAG, "startRecordingVideo stop")
-            stopRecordingVideo()
         }
     }
 
-    fun stopRecordingVideo() {
-        Log.d(TAG, "stopRecordingVideo")
-        gizoAnalysis.stopSavingSession()
-        changeRecordState()
-    }
+    fun stopRecordingVideo() =
+        viewModelScope.launch {
+            Log.d(TAG, "stopRecordingVideo")
+            gizoAnalysis.stopSavingSession()
+            changeRecordState().join()
+        }
+
 
     fun start(
         lifecycleOwner: LifecycleOwner
@@ -626,7 +631,7 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
                 return@launch
             }
 
-            stopRecording()
+            stopRecording().join()
             attachMapNavigation()
             isAutoStop = autoStop
             val startTrip = Date(System.currentTimeMillis())
@@ -737,38 +742,40 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
         }
     }
 
-    private fun changeRecordState(newRecordingState: RecordingState? = null) {
-        Log.d(TAG, "changeRecordState : ${newRecordingState?.name}")
-        when (newRecordingState) {
-            null -> {
-                if (lastUserActivity == UserActivityType.STILL)
-                    changeRecordState(RecordingState.STILL)
-                else
-                    changeRecordState(RecordingState.Background)
-            }
+    private fun changeRecordState(): Job {
+        Log.d(TAG, "changeRecordState empty lastUserActivity:$lastUserActivity")
+        return if (lastUserActivity == UserActivityType.STILL)
+            changeRecordState(RecordingState.STILL)
+        else
+            changeRecordState(RecordingState.Background)
+    }
 
-            RecordingState.STILL -> {
-                stopRecording()
-                if (_uiState.value.isAlive.not()) {
-                    detachMapNavigation()
+    private fun changeRecordState(newRecordingState: RecordingState) =
+        viewModelScope.launch {
+            Log.d(TAG, "changeRecordState : ${newRecordingState.name}")
+            when (newRecordingState) {
+                RecordingState.STILL -> {
+                    stopRecording()
+                    if (_uiState.value.isAlive.not()) {
+                        detachMapNavigation()
+                    }
+                    _recordingState.tryEmit(RecordingState.STILL)
+                    _notificationEvent.tryEmit(NotificationEvent.BackgroundStill)
                 }
-                _recordingState.tryEmit(RecordingState.STILL)
-                _notificationEvent.tryEmit(NotificationEvent.BackgroundStill)
-            }
 
-            RecordingState.Background -> {
-                startRecordingBackground()
-            }
+                RecordingState.Background -> {
+                    startRecordingBackground()
+                }
 
-            RecordingState.NoCamera -> {
-                startRecordingNoCamera(autoStop = true)
-            }
+                RecordingState.NoCamera -> {
+                    startRecordingNoCamera(autoStop = true)
+                }
 
-            else -> {
+                else -> {
 
+                }
             }
         }
-    }
 
     private fun isStillPauseRunning() =
         stillJob?.isActive == true
@@ -789,7 +796,7 @@ class RecordingViewModel @AssistedInject constructor() : ViewModel() {
         return (midnightDate?.time ?: 0) - (currentDate?.time ?: 0)
     }
 
-    private fun stopRecording() {
+    private fun stopRecording() = viewModelScope.launch {
         Log.d(TAG, "stopRecording")
         recordingBackgroundTimerJob?.cancel()
         gizoAnalysis.stopSavingSession()
